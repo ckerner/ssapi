@@ -1,0 +1,14 @@
+from ssapi import *
+
+   Clstr = Cluster()
+   Clstr.dump()
+   print(Clstr.gpfsdevs)
+
+
+   try:
+     F = Filesystem('testfs')
+   except:
+     print("No Filesystem device specified.")
+   else:
+     print(F[disks])
+
