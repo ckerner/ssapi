@@ -21,9 +21,9 @@ def run_cmd( cmdstr=None ):
     subp = Popen(cmd, stdout=PIPE, stderr=PIPE)
     (outdata, errdata) = subp.communicate()
     if subp.returncode != 0:
-        msg = "Error running cmd '{0}: {1}'".format(cmdstr,errdata)
-        print( msg )
+        msg = "Error\n  Command: {0}\n  Message: {1}".format(cmdstr,errdata)
         raise UserWarning( msg )
+        sys.exit( subp.returncode )
     return( outdata )
 
 
