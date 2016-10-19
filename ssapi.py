@@ -27,6 +27,17 @@ def run_cmd( cmdstr=None ):
     return( outdata )
 
 
+def replace_string( mystring ):
+    """
+    The mmlsfileset command returns encoded strings for special characters. 
+    This will replace those encoded strings and return a true string.
+    """
+    tempstring = mystring.replace('%2F', '/')
+    mystring = tempstring
+    tempstring = mystring.replace('%3A', ':')
+    return tempstring
+
+
 class Cluster:
     """
     This class will collect the information about the cluster.
@@ -136,15 +147,31 @@ class Cluster:
            for key in self.nsd_info.keys():
                print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
 
+
 class Filesystem:
     """
     This class will collect the information about the specified GPFS device.
     """
+
+    filesystem_defaults = { 'automaticMountOption': 'yes', 
+                            'defaultMetadataReplicas': '1', 
+                            'maxMetadataReplicas': '2', 
+                            'defaultDataReplicas': '1', 
+                            'maxDataReplicas': '2', 
+                            'blockAllocationType': '',
+                            'fileLockingSemantics': '',
+                          }
+
     def __init__( self, gpfsdev ):
         if not gpfsdev:
            raise ValueError('NoDevice')
+        else:
+           self.gpfsdev = gpfsdev
+           self.get_filesystem_information()
+           self.get_fileset_information()
 
-        self.gpfsdev = gpfsdev
+
+    def get_filesystem_information( self ):
         self.filesys = {}
         cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsfs {0} -Y".format(self.gpfsdev))
         for line in cmd_out.splitlines():
@@ -162,12 +189,63 @@ class Filesystem:
             value = line.split(':')[8]  
             self.filesys[key] = value
 
+
+    def fileset_list( self ):
+        """
+        Return all of the fileset names in the file system.
+        """
+        return self.filesets.keys()
+
+
+    def get_fileset_information( self ):
+        self.filesets = {}
+        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsfileset {0} -Y".format(self.gpfsdev))
+
+        # Process the HEADER line
+        keys = cmd_out.splitlines()[0].split(':')[7:]
+
+        for line in cmd_out.splitlines()[1:]:
+            line.rstrip()
+
+            # Ignore blank lines
+            if not line:
+               continue
+
+            vals = line.split(':')[7:]
+            fname = vals[0]
+            self.filesets[fname] = {}
+            for idx in range(len(vals)-1):
+                self.filesets[fname][keys[idx]] = replace_string( vals[idx] )
+
+
+    @classmethod
+    def Create( self, gpfsdev, fsname ):
+        """ 
+        This function will create a new filesystem.
+
+        Input 1: A dictionary containing the nsd's and their parameters.
+           mydisks['nsd1']['usage']='dataAndMetadata'
+           mydisks['nsd1']['failuregroup']='-1'
+           mydisks['nsd1']['pool']='system'
+
+        Input 2: A dictionary containing parameters for the file system.
+        """
+        print("Creating {0} on {1}".format(fsname, gpfsdev))
+
+
     def __getitem__( self, key ):
         return self.filesys[key]
                      
 
 if __name__ == '__main__':
-   pass
+   myFS = Filesystem( 'esx' )
+
+   fslist = myFS.fileset_list()
+   print("{}".format(myFS.filesets))
+
+   sys.exit(0)
+
+   newfs = Filesystem.Create( 'fs0', 'chad' )
 
    Clstr = Cluster()
    #Clstr.dump()
