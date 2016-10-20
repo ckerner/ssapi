@@ -10,6 +10,7 @@ from __future__ import print_function
 from subprocess import Popen, PIPE
 import sys
 import shlex
+import time
 
 def run_cmd( cmdstr=None ):
     """
@@ -147,6 +148,50 @@ class Cluster:
            for key in self.nsd_info.keys():
                print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
 
+class Snapshots:
+    def __init__( self, gpfsdev, fileset='' ):
+        self.gpfsdev = gpfsdev
+        self.fileset = fileset
+        self.snapshots = {}
+
+        if self.fileset == '':
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlssnapshot {0} -Y".format( self.gpfsdev ))
+        else:
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlssnapshot {0} -j {1} -Y".format( self.gpfsdev, self.fileset ))
+
+        # Process the HEADER line
+        if 'No snapshots in file system' in cmd_out.splitlines()[0]:
+           self.snap_count = 0
+           return
+
+        keys = cmd_out.splitlines()[0].split(':')[6:]
+
+        for line in cmd_out.splitlines()[1:]:
+            line.rstrip()
+
+            # Ignore blank lines
+            if not line:
+               continue
+
+            vals = line.split(':')[6:]
+            sname = vals[1]
+            self.snapshots[sname] = {}
+            for idx in range(len(vals)-1):
+                self.snapshots[sname][keys[idx]] = replace_string( vals[idx] )
+
+        snaplist = self.snapshots.keys()
+        self.snaplist = sorted( snaplist )
+        self.snap_count = len( snaplist )
+
+
+    def snap( self ):
+        if self.fileset == '':
+           snapname = 'FILESYSTEM==' + time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ))
+        else:
+           snapname = self.fileset + '==' + time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1} -j {2}".format( self.gpfsdev, snapname, self.fileset ))
+
 
 class Filesystem:
     """
@@ -171,6 +216,11 @@ class Filesystem:
            self.get_fileset_information()
 
 
+    def print_keys( self ):
+        keys = self.filesys.keys()
+        return keys
+
+
     def get_filesystem_information( self ):
         self.filesys = {}
         cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsfs {0} -Y".format(self.gpfsdev))
@@ -187,7 +237,7 @@ class Filesystem:
 
             key = line.split(':')[7]  
             value = line.split(':')[8]  
-            self.filesys[key] = value
+            self.filesys[key] = replace_string( value )
 
 
     def fileset_list( self ):
@@ -232,18 +282,27 @@ class Filesystem:
         """
         print("Creating {0} on {1}".format(fsname, gpfsdev))
 
+        self = Filesystem( gpfsdev )
+        return self
+
 
     def __getitem__( self, key ):
         return self.filesys[key]
                      
 
 if __name__ == '__main__':
-   myFS = Filesystem( 'esx' )
+   #
+   # This is just where I do my testing of stuff.
+   #
 
+   snap = Snapshots( 'condo', 'root' )
+
+   sys.exit(0)
+
+   myFS = Filesystem( 'condo' )
    fslist = myFS.fileset_list()
    print("{}".format(myFS.filesets))
 
-   sys.exit(0)
 
    newfs = Filesystem.Create( 'fs0', 'chad' )
 
