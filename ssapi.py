@@ -183,10 +183,32 @@ class Snapshots:
         self.snaplist = sorted( snaplist )
         self.snap_count = len( snaplist )
 
+    
+    def delsnaps( self, max_to_keep ):
+        if self.snap_count <= max_to_keep:
+           return
+
+        self.dellist = list(self.snaplist)[ : -( max_to_keep ) ]
+        for snap_name in self.dellist:
+            if self.fileset == '':
+               print("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
+            else:
+               print("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
+        
+
 
     def snap( self ):
+        """
+        This code will create a snapshot of the specified filesystem or fileset.  
+
+        NOTE: You can NOT mix filesystem and fileset snapshots on the same GPFS device.
+
+        Filesystem snapshots are named: CCYYMMDD==HHMM for easy sorting / processing.
+
+        Filesystem snapshots are named: <Fileset>==CCYYMMDD==HHMM for easy processing again.
+        """
         if self.fileset == '':
-           snapname = 'FILESYSTEM==' + time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
+           snapname = time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ))
         else:
            snapname = self.fileset + '==' + time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
