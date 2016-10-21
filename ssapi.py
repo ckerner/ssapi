@@ -237,16 +237,21 @@ class Snapshots:
         self.snap_count = len( snaplist )
 
     
-    def delsnaps( self, max_to_keep ):
+    def get_delete_list( self, max_to_keep ):
+        self.dellist = []
         if self.snap_count <= max_to_keep:
-           return
+           self.dellist
 
         self.dellist = list(self.snaplist)[ : -( max_to_keep ) ]
-        for snap_name in self.dellist:
-            if self.fileset == '':
-               print("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
-            else:
-               print("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
+
+        return self.dellist
+
+
+    def delsnap( self, snap_name ):
+        if self.fileset == '':
+           run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
+        else:
+           run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
         
 
 
@@ -261,7 +266,7 @@ class Snapshots:
         Filesystem snapshots are named: <Fileset>==CCYYMMDD==HHMM for easy processing again.
         """
         if self.fileset == '':
-           snapname = time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
+           snapname = time.strftime("%Y%m%d") + '==' + time.strftime("%H%M")
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ))
         else:
            snapname = self.fileset + '==' + time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
