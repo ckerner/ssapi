@@ -12,6 +12,7 @@ import sys
 import shlex
 import time
 
+
 def run_cmd( cmdstr=None ):
     """
     Wrapper around subprocess module calls.
@@ -28,7 +29,7 @@ def run_cmd( cmdstr=None ):
     return( outdata )
 
 
-def replace_string( mystring ):
+def replace_encoded_strings( mystring ):
     """
     The mmlsfileset command returns encoded strings for special characters. 
     This will replace those encoded strings and return a true string.
@@ -148,6 +149,58 @@ class Cluster:
            for key in self.nsd_info.keys():
                print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
 
+
+def remove_special_characters( mystring ):
+    tempstring = mystring.replace('%', '')
+    mystring = tempstring
+    tempstring = mystring.replace('(', '')
+    mystring = tempstring
+    tempstring = mystring.replace(')', '')
+    return tempstring
+
+
+
+class StoragePool:
+    def __init__( self, gpfsdev ):
+        self.gpfsdev = gpfsdev
+        self.pools = {}
+
+        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlspool {}".format( self.gpfsdev))
+
+        for line in cmd_out.splitlines()[2:]:
+            line.rstrip()
+
+            # Ignore blank lines
+            if not line:
+               continue
+
+            newline = remove_special_characters( line )
+            vals = newline.split()
+            poolname = vals[0]
+            self.pools[poolname] = {}
+            self.pools[poolname]['id'] = vals[1]
+            self.pools[poolname]['blksize'] = vals[2]
+            self.pools[poolname]['blkmod'] = vals[3]
+            self.pools[poolname]['data'] = vals[4]
+            self.pools[poolname]['metadata'] = vals[5]
+            self.pools[poolname]['datasize'] = vals[6]
+            self.pools[poolname]['datafree'] = vals[7]
+            self.pools[poolname]['datapctfree'] = vals[8]
+            self.pools[poolname]['metasize'] = vals[9]
+            self.pools[poolname]['metafree'] = vals[10]
+            self.pools[poolname]['metapctfree'] = vals[11]
+
+        self.pool_list = self.pools.keys()
+
+
+    def dump( self ):
+        print("{}".format(self.pools))
+
+
+    def __getitem__( self, key ):
+        return self.pools[key]
+                     
+
 class Snapshots:
     def __init__( self, gpfsdev, fileset='' ):
         self.gpfsdev = gpfsdev
@@ -177,7 +230,7 @@ class Snapshots:
             sname = vals[1]
             self.snapshots[sname] = {}
             for idx in range(len(vals)-1):
-                self.snapshots[sname][keys[idx]] = replace_string( vals[idx] )
+                self.snapshots[sname][keys[idx]] = replace_encoded_strings( vals[idx] )
 
         snaplist = self.snapshots.keys()
         self.snaplist = sorted( snaplist )
@@ -236,12 +289,16 @@ class Filesystem:
            self.gpfsdev = gpfsdev
            self.get_filesystem_information()
            self.get_fileset_information()
+           self.get_pool_information()
 
 
     def print_keys( self ):
         keys = self.filesys.keys()
         return keys
 
+
+    def get_pool_information( self ):
+        self.pools = StoragePool( self.gpfsdev )
 
     def get_filesystem_information( self ):
         self.filesys = {}
@@ -259,7 +316,7 @@ class Filesystem:
 
             key = line.split(':')[7]  
             value = line.split(':')[8]  
-            self.filesys[key] = replace_string( value )
+            self.filesys[key] = replace_encoded_strings( value )
 
 
     def fileset_list( self ):
@@ -287,7 +344,7 @@ class Filesystem:
             fname = vals[0]
             self.filesets[fname] = {}
             for idx in range(len(vals)-1):
-                self.filesets[fname][keys[idx]] = replace_string( vals[idx] )
+                self.filesets[fname][keys[idx]] = replace_encoded_strings( vals[idx] )
 
 
     @classmethod
