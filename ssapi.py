@@ -205,6 +205,7 @@ class Snapshots:
     def __init__( self, gpfsdev, fileset='' ):
         self.gpfsdev = gpfsdev
         self.fileset = fileset
+        self.snap_name_separator = '_'
         self.snapshots = {}
 
         if self.fileset == '':
@@ -238,6 +239,11 @@ class Snapshots:
 
     
     def get_delete_list( self, max_to_keep ):
+        """
+        Given an integer of how many snapshots you want to keep, this will return a list of snapshot
+        names that are to be purged.  It does not purge them, only a list of what needs to be purged
+        based on how many you want to keep.
+        """
         self.dellist = []
         if self.snap_count <= max_to_keep:
            self.dellist
@@ -248,11 +254,17 @@ class Snapshots:
 
 
     def delsnap( self, snap_name ):
+        """
+        Given a specific snapshot name, this routine will execute mmdelsnapshot and return you the output
+        from the command.  The object already knows if it is a filesystem or a fileset snapshot, so you just
+        need to specify the snapshot name.
+        """
         if self.fileset == '':
-           run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
         else:
-           run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
-        
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
+       
+        return cmd_out 
 
 
     def snap( self ):
@@ -266,10 +278,10 @@ class Snapshots:
         Filesystem snapshots are named: <Fileset>==CCYYMMDD==HHMM for easy processing again.
         """
         if self.fileset == '':
-           snapname = time.strftime("%Y%m%d") + '==' + time.strftime("%H%M")
+           snapname = time.strftime("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ))
         else:
-           snapname = self.fileset + '==' + time.strformat("%Y%m%d") + '==' + time.strftime("%H%M")
+           snapname = self.fileset + self.snap_name_separator + time.strformat("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1} -j {2}".format( self.gpfsdev, snapname, self.fileset ))
 
 
