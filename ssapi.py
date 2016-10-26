@@ -281,7 +281,7 @@ class Snapshots:
            snapname = time.strftime("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ))
         else:
-           snapname = self.fileset + self.snap_name_separator + time.strformat("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
+           snapname = self.fileset + self.snap_name_separator + time.strftime("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1} -j {2}".format( self.gpfsdev, snapname, self.fileset ))
 
 
