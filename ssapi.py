@@ -1,9 +1,26 @@
 #!/usr/bin/env python
+#=====================================================================================
+# Chad Kerner, Systems Engineer
+# Storage Enabling Technologies 
+# National Center for Supercomputing Applications
+# ckerner@illinois.edu     chad.kerner@gmail.com
+#=====================================================================================
 #
-# This is a work in progress, adding functionality as I need it.
+# This was born out of a need to programmatically interface with IBM Spectrum
+# Scale or the software formerly knows as GPFS.
 #
-# Chad Kerner - chad.kerner@gmail.com
+# This was written in Python 2.7 with Spectrum Scale 4.2.  That is what we currently
+# have and so that is what I will keep it updated with until other needs arise.
+
+# There is NO support, use it at your own risk.  Although I have not coded anything
+# too awfully dramatic in here.
 #
+# If you find a bug, fix it.  Then send me the diff and I will merge it into the code.
+#
+# You may want to pull often because this is being updated quite frequently as our 
+# needs arise in our clusters.
+#
+#=====================================================================================
 
 
 from __future__ import print_function
@@ -409,32 +426,32 @@ if __name__ == '__main__':
    # This is just where I do my testing of stuff.
    #
 
-   snap = Snapshots( 'condo', 'root' )
-
    sys.exit(0)
 
-   myFS = Filesystem( 'condo' )
-   fslist = myFS.fileset_list()
-   print("{}".format(myFS.filesets))
+   snap = Snapshots( 'condo', 'root' )
+
+   #myFS = Filesystem( 'condo' )
+   #fslist = myFS.fileset_list()
+   #print("{}".format(myFS.filesets))
 
 
-   newfs = Filesystem.Create( 'fs0', 'chad' )
+   #newfs = Filesystem.Create( 'fs0', 'chad' )
 
-   Clstr = Cluster()
+   #Clstr = Cluster()
    #Clstr.dump()
 
-   print(Clstr.gpfsdevs)
-   myFs = Filesystem( 'wvu' )
-   FSa = Filesystem( 'des003' )
+   #print(Clstr.gpfsdevs)
+   #myFs = Filesystem( 'wvu' )
+   #FSa = Filesystem( 'des003' )
 
-   print(myFs['disks'])
-   print(FSa['disks'])
+   #print(myFs['disks'])
+   #print(FSa['disks'])
 
-   try:
-     F = Filesystem('')
-   except:
-     print("No Filesystem device specified.")
-   else:
-     print(F[disks])
+   #try:
+   #  F = Filesystem('')
+   #except:
+   #  print("No Filesystem device specified.")
+   #else:
+   #  print(F[disks])
   
 
