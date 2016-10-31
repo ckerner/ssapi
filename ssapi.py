@@ -237,6 +237,7 @@ class Snapshots:
         self.snaplist = sorted( snaplist )
         self.snap_count = len( snaplist )
 
+
     
     def get_delete_list( self, max_to_keep ):
         """
@@ -249,7 +250,6 @@ class Snapshots:
            self.dellist
 
         self.dellist = list(self.snaplist)[ : -( max_to_keep ) ]
-
         return self.dellist
 
 
@@ -263,7 +263,6 @@ class Snapshots:
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
         else:
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
-       
         return cmd_out 
 
 
@@ -343,6 +342,13 @@ class Filesystem:
         return self.filesets.keys()
 
 
+    def independent_inode_fileset( self, fname ):
+        if self.filesets[fname]['fstype'] == 'Independent':
+           return True
+        else:
+           return False
+
+
     def get_fileset_information( self ):
         self.filesets = {}
         cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsfileset {0} -Y".format(self.gpfsdev))
@@ -362,6 +368,18 @@ class Filesystem:
             self.filesets[fname] = {}
             for idx in range(len(vals)-1):
                 self.filesets[fname][keys[idx]] = replace_encoded_strings( vals[idx] )
+
+            # Set the fileset type. independent inode or dependent inode
+            if self.filesets[fname]['filesetName'] == 'root' and self.filesets[fname]['inodeSpace'] == '0':
+               self.filesets[fname]['fstype'] = 'Independent'
+            elif self.filesets[fname]['inodeSpace'] >= '1':
+               self.filesets[fname]['fstype'] = 'Independent'
+            elif self.filesets[fname]['inodeSpace'] == '0':
+               self.filesets[fname]['fstype'] = 'Dependent'
+            else:
+               self.filesets[fname]['fstype'] = 'Unknown'
+
+
 
 
     @classmethod
