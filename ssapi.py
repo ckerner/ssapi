@@ -11,7 +11,7 @@
 #
 # This was written in Python 2.7 with Spectrum Scale 4.2.  That is what we currently
 # have and so that is what I will keep it updated with until other needs arise.
-
+#
 # There is NO support, use it at your own risk.  Although I have not coded anything
 # too awfully dramatic in here.
 #
