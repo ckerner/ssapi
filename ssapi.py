@@ -57,19 +57,50 @@ def replace_encoded_strings( mystring ):
     return tempstring
 
 
-class Cluster:
+def remove_special_characters( mystring ):
     """
-    This class will collect the information about the cluster.
+    The mmlspool command has returns strings with special characters.       
+    This will remove those encoded strings.
+    """
+    tempstring = mystring.replace('%', '')
+    mystring = tempstring
+    tempstring = mystring.replace('(', '')
+    mystring = tempstring
+    tempstring = mystring.replace(')', '')
+    return tempstring
+
+
+class Nsds:
+    """
+    This class contains all of the information about the NSDs in the cluster.  It
+    includes the NSD name, servers they are attached to, gpfs device they serve, etc.
+
+    gpfsdevs - a list unique gpfs devices
+
+    nsds[name]['usage'] = The gpfs device the specified name is a part of
+    nsds[name]['servers'] = The storage servers the specified name is hosted by
+
     """
     def __init__( self ):
-        self.get_cluster_info()
-        self.get_nsd_info()
+        self.collect_nsd_info()
 
-    def get_nsd_info( self ):
+    def dump( self ):
+        print("GPFS Devices: {}".format(self.gpfsdevs))
+        nsd_keys = self.nsds.keys()
+        for nsd in sorted(nsd_keys):
+            print("{:<10s}  {:<10s}  {:<s}".format(nsd, self.nsds[nsd]['usage'], self.nsds[nsd]['servers']))
+
+    def return_gpfs_devices( self ):
         """
-        This routing parses the mmlsnsd command.
+        Return an iterable list of uniq GPFS devices.
         """
-        self.nsd_info = {}
+        return self.gpfsdevs
+    
+    def collect_nsd_info( self ):
+        """
+        Process the mmlsnsd command output to build the necessary structures.
+        """
+        self.nsds = {}
         fsdevs = {}
         cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsnsd")
 
@@ -98,13 +129,30 @@ class Cluster:
                servers = (line.split()[2]).split(',')
                fsdevs[fsname] = 1
 
-            self.nsd_info[nsd_name] = {} 
-            self.nsd_info[nsd_name]['usage'] = fsname
-            self.nsd_info[nsd_name]['servers'] = servers
-            
+            self.nsds[nsd_name] = {}
+            self.nsds[nsd_name]['usage'] = fsname
+            self.nsds[nsd_name]['servers'] = servers
+
+            try:
+               del fsname
+               del servers
+            except NameError:
+               pass
+
         self.gpfsdevs = fsdevs.keys()
-        
- 
+
+
+
+class Cluster:
+    """
+    This class will collect the information about the cluster.
+    """
+    def __init__( self ):
+        self.debug = 0
+        self.get_cluster_info()
+        self.nsds = Nsds()
+        self.gpfsdevs = self.nsds.return_gpfs_devices()
+
     def get_cluster_info( self ):
         """
         This routine parses the mmlscluster command.
@@ -156,24 +204,17 @@ class Cluster:
             
     
     def dump( self ):
-        if debug == 1:
+        if self.debug >= 1:
            print("Cluster Information")
            for key in self.cluster_info.keys():
                print("{0} -> {1}".format(key, self.cluster_info[key]))
 
-        if debug == 2:
+        if self.debug >= 2:
            print("\nNSD Information")
            for key in self.nsd_info.keys():
                print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
 
 
-def remove_special_characters( mystring ):
-    tempstring = mystring.replace('%', '')
-    mystring = tempstring
-    tempstring = mystring.replace('(', '')
-    mystring = tempstring
-    tempstring = mystring.replace(')', '')
-    return tempstring
 
 
 
