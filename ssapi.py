@@ -119,6 +119,11 @@ class Nsds:
             if 'File system' in line:
                continue
 
+            if '(local cache)' in line:
+               nsd_name = line.split()[2]
+               fsname = 'lroc'
+               servers = (line.split()[3]).split(',')
+          
             if 'free disk' in line:
                nsd_name = line.split()[2]
                fsname = 'free'
