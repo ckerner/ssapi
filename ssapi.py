@@ -123,8 +123,7 @@ class Nsds:
                nsd_name = line.split()[2]
                fsname = 'lroc'
                servers = (line.split()[3]).split(',')
-          
-            if 'free disk' in line:
+            elif 'free disk' in line:
                nsd_name = line.split()[2]
                fsname = 'free'
                servers = (line.split()[3]).split(',')
