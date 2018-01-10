@@ -308,8 +308,12 @@ class Snapshots:
         based on how many you want to keep.
         """
         self.dellist = []
+        if self.snap_count <= max_to_keep:
+           return self.dellist
 
-        if self.snap_count > max_to_keep:
+        if max_to_keep = 0:
+           self.dellist = self.snaplist
+        elif self.snap_count > max_to_keep:
            self.dellist = list(self.snaplist)[ : -( max_to_keep ) ]
 
         return self.dellist
