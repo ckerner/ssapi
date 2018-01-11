@@ -311,7 +311,7 @@ class Snapshots:
         if self.snap_count <= max_to_keep:
            return self.dellist
 
-        if max_to_keep = 0:
+        if max_to_keep == 0:
            self.dellist = self.snaplist
         elif self.snap_count > max_to_keep:
            self.dellist = list(self.snaplist)[ : -( max_to_keep ) ]
