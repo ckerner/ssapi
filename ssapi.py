@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #=====================================================================================
-# Chad Kerner, Systems Engineer
-# Storage Enabling Technologies 
+# Chad Kerner, Senior Systems Engineer
+# Storage Enabling Technologies
 # National Center for Supercomputing Applications
 # ckerner@illinois.edu     chad.kerner@gmail.com
 #=====================================================================================
@@ -17,7 +17,7 @@
 #
 # If you find a bug, fix it.  Then send me the diff and I will merge it into the code.
 #
-# You may want to pull often because this is being updated quite frequently as our 
+# You may want to pull often because this is being updated quite frequently as our
 # needs arise in our clusters.
 #
 #=====================================================================================
@@ -48,7 +48,7 @@ def run_cmd( cmdstr=None ):
 
 def replace_encoded_strings( mystring ):
     """
-    The mmlsfileset command returns encoded strings for special characters. 
+    The mmlsfileset command returns encoded strings for special characters.
     This will replace those encoded strings and return a true string.
     """
     tempstring = mystring.replace('%2F', '/')
@@ -59,7 +59,7 @@ def replace_encoded_strings( mystring ):
 
 def remove_special_characters( mystring ):
     """
-    The mmlspool command has returns strings with special characters.       
+    The mmlspool command has returns strings with special characters.
     This will remove those encoded strings.
     """
     tempstring = mystring.replace('%', '')
@@ -95,7 +95,7 @@ class Nsds:
         Return an iterable list of uniq GPFS devices.
         """
         return self.gpfsdevs
-    
+
     def collect_nsd_info( self ):
         """
         Process the mmlsnsd command output to build the necessary structures.
@@ -186,11 +186,11 @@ class Cluster:
                self.cluster_info['nodes'][nodeid]['daemon_name'] = daemonname
                self.cluster_info['nodes'][nodeid]['ip'] = ipaddr
                self.cluster_info['nodes'][nodeid]['admin_name'] = adminname
- 
+
             if 'Node  Daemon' in line:
                found_nodes = found_nodes + 1
                self.cluster_info['nodes'] = {}
-            
+
             if 'GPFS cluster name' in line:
                self.cluster_info['name'] = line.split()[3]
             if 'GPFS cluster id' in line:
@@ -205,8 +205,8 @@ class Cluster:
                self.cluster_info['primary'] = line.split()[2]
             if 'Secondary server' in line:
                self.cluster_info['secondary'] = line.split()[2]
-            
-    
+
+
     def dump( self ):
         if self.debug >= 1:
            print("Cluster Information")
@@ -261,7 +261,7 @@ class StoragePool:
 
     def __getitem__( self, key ):
         return self.pools[key]
-                     
+
 
 class Snapshots:
     def __init__( self, gpfsdev, fileset='' ):
@@ -300,7 +300,7 @@ class Snapshots:
         self.snap_count = len( snaplist )
 
 
-    
+
     def get_delete_list( self, max_to_keep ):
         """
         Given an integer of how many snapshots you want to keep, this will return a list of snapshot
@@ -329,12 +329,12 @@ class Snapshots:
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
         else:
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
-        return cmd_out 
+        return cmd_out
 
 
     def snap( self ):
         """
-        This code will create a snapshot of the specified filesystem or fileset.  
+        This code will create a snapshot of the specified filesystem or fileset.
 
         NOTE: You can NOT mix filesystem and fileset snapshots on the same GPFS device.
 
@@ -355,11 +355,11 @@ class Filesystem:
     This class will collect the information about the specified GPFS device.
     """
 
-    filesystem_defaults = { 'automaticMountOption': 'yes', 
-                            'defaultMetadataReplicas': '1', 
-                            'maxMetadataReplicas': '2', 
-                            'defaultDataReplicas': '1', 
-                            'maxDataReplicas': '2', 
+    filesystem_defaults = { 'automaticMountOption': 'yes',
+                            'defaultMetadataReplicas': '1',
+                            'maxMetadataReplicas': '2',
+                            'defaultDataReplicas': '1',
+                            'maxDataReplicas': '2',
                             'blockAllocationType': '',
                             'fileLockingSemantics': '',
                           }
@@ -396,8 +396,8 @@ class Filesystem:
             if 'HEADER' in line:
                continue
 
-            key = line.split(':')[7]  
-            value = line.split(':')[8]  
+            key = line.split(':')[7]
+            value = line.split(':')[8]
             self.filesys[key] = replace_encoded_strings( value )
 
 
@@ -450,7 +450,7 @@ class Filesystem:
 
     @classmethod
     def Create( self, gpfsdev, fsname ):
-        """ 
+        """
         This function will create a new filesystem.
 
         Input 1: A dictionary containing the nsd's and their parameters.
@@ -468,7 +468,7 @@ class Filesystem:
 
     def __getitem__( self, key ):
         return self.filesys[key]
-                     
+
 
 if __name__ == '__main__':
    #
@@ -502,5 +502,5 @@ if __name__ == '__main__':
    #  print("No Filesystem device specified.")
    #else:
    #  print(F[disks])
-  
+
 
