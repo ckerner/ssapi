@@ -28,6 +28,7 @@ from subprocess import Popen, PIPE
 import sys
 import shlex
 import time
+import socket
 
 
 def run_cmd( cmdstr=None ):
@@ -154,8 +155,60 @@ class Cluster:
     def __init__( self ):
         self.debug = 0
         self.get_cluster_info()
+        self.is_node_cluster_manager()
         self.nsds = Nsds()
         self.gpfsdevs = self.nsds.return_gpfs_devices()
+
+    def get_manager_info( self ):
+        """
+        This routine parses the mmlsmgr command.
+        """
+        self.manager_info = {}
+        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsmgr")
+
+    def get_cluster_manager( self ):
+        """
+        This routine parses the mmlsmgr command.
+        """
+        self.cluster_manager = {}
+        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsmgr -c")
+        for line in cmd_out.splitlines():
+            line.rstrip()
+
+            # Ignore blank lines
+            if not line:
+               continue
+
+            if 'Cluster manager node' in line:
+               line = line.translate(None, '()')
+               ipaddr = line.split()[3]
+               nodename = line.split()[4]
+               self.cluster_manager['node'] = nodename
+               self.cluster_manager['ip'] = ipaddr
+
+    def is_node_cluster_manager( self ):
+        """
+        Check to see if this node is the cluster manager.
+        """
+        self.cluster_manager = {}
+        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsmgr -c")
+        for line in cmd_out.splitlines():
+            line.rstrip()
+
+            # Ignore blank lines
+            if not line:
+               continue
+
+            if 'Cluster manager node' in line:
+               line = line.translate(None, '()')
+               ipaddr = line.split()[3]
+               nodename = line.split()[4]
+               local_host = socket.gethostname()
+               if nodename in local_host:
+                  self.cluster_manager = True
+               else:
+                  self.cluster_manager = False
+
 
     def get_cluster_info( self ):
         """
