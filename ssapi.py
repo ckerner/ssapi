@@ -155,16 +155,20 @@ class Cluster:
     def __init__( self ):
         self.debug = 0
         self.get_cluster_info()
+        self.get_node_name()
         self.is_node_cluster_manager()
         self.nsds = Nsds()
         self.gpfsdevs = self.nsds.return_gpfs_devices()
 
-    def get_manager_info( self ):
+    def get_node_name( self ):
         """
-        This routine parses the mmlsmgr command.
+        This routine will extract the current node name from the GPFS configuration file.
         """
-        self.manager_info = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsmgr")
+        f = open('/var/mmfs/gen/mmfsNodeData', 'r')
+        nodecfg = f.read()
+        nodecfg_s = nodecfg.split(':')
+        f.close()
+        self.nodename = nodecfg_s[5]
 
     def get_cluster_manager( self ):
         """
@@ -188,27 +192,15 @@ class Cluster:
 
     def is_node_cluster_manager( self ):
         """
-        Check to see if this node is the cluster manager.
+        Check to see if this node is the cluster manager.  If so, 
+        set cluster_manager to True else set it to False.
         """
-        self.cluster_manager = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsmgr -c")
-        for line in cmd_out.splitlines():
-            line.rstrip()
+        self.get_cluster_manager()
 
-            # Ignore blank lines
-            if not line:
-               continue
-
-            if 'Cluster manager node' in line:
-               line = line.translate(None, '()')
-               ipaddr = line.split()[3]
-               nodename = line.split()[4]
-               local_host = socket.gethostname()
-               if nodename in local_host:
-                  self.cluster_manager = True
-               else:
-                  self.cluster_manager = False
-
+        if self.nodename == self.cluster_manager['node']:
+           self.is_cluster_manager = True
+        else:
+           self.is_cluster_manager = False
 
     def get_cluster_info( self ):
         """
