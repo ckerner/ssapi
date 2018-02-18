@@ -152,9 +152,9 @@ class Cluster:
     """
     This class will collect the information about the cluster.
 
-    If you wish to debug the class, you can now pass Debug=1 on the initialization.
+    If you wish to debug the class, you can now pass Debug=True on the initialization.
     """
-    def __init__( self, Debug=0 ):
+    def __init__( self, Debug=False ):
         self.set_debug( Debug )
         self.get_cluster_info()
         self.get_node_name()
@@ -167,26 +167,19 @@ class Cluster:
         Set the debugging level for the class. 0 by default.
         """
         self.debug = Debug
-        if self.debug > 0:
-           print("DEBUG: Debugging level set to: {}".format(self.debug))
-
-    def increment_debug( self ):
-        """
-        Increment the debugging level for the class by 1 per call.
-        """
-        self.debug = self.debug + 1
-        print("DEBUG: Debugging level set to: {}".format(self.debug))
+        if self.debug==True:
+           print("DEBUG: Debugging turned on")
 
     def toggle_debug( self ):
         """
         Toggle debugging. If on, shut it off, if off, set it to 1.
         """
-        if self.debug >= 1:
+        if self.debug == True:
            print("DEBUG: Turning ssapi debugging off.")
-           self.debug = 0
+           self.debug = False
         else:
            print("DEBUG: Turning ssapi debugging on.")
-           self.debug = 1
+           self.debug = True
 
     def get_node_name( self ):
         """
@@ -217,7 +210,7 @@ class Cluster:
                nodename = line.split()[4]
                self.cluster_manager['node'] = nodename
                self.cluster_manager['ip'] = ipaddr
-               if self.debug >= 1:
+               if self.debug:
                   print("DEBUG: Cluster Manager IP: {0}".format(ipaddr))
                   print("DEBUG: Cluster Manager Name: {0}".format(nodename))
 
@@ -284,12 +277,11 @@ class Cluster:
 
 
     def dump( self ):
-        if self.debug >= 1:
+        if self.debug:
            print("Cluster Information")
            for key in self.cluster_info.keys():
                print("{0} -> {1}".format(key, self.cluster_info[key]))
 
-        if self.debug >= 2:
            print("\nNSD Information")
            for key in self.nsd_info.keys():
                print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
