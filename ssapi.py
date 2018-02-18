@@ -151,14 +151,42 @@ class Nsds:
 class Cluster:
     """
     This class will collect the information about the cluster.
+
+    If you wish to debug the class, you can now pass Debug=1 on the initialization.
     """
-    def __init__( self ):
-        self.debug = 0
+    def __init__( self, Debug=0 ):
+        self.set_debug( Debug )
         self.get_cluster_info()
         self.get_node_name()
         self.is_node_cluster_manager()
         self.nsds = Nsds()
         self.gpfsdevs = self.nsds.return_gpfs_devices()
+
+    def set_debug( self, Debug ):
+        """
+        Set the debugging level for the class. 0 by default.
+        """
+        self.debug = Debug
+        if self.debug > 0:
+           print("DEBUG: Debugging level set to: {}".format(self.debug))
+
+    def increment_debug( self ):
+        """
+        Increment the debugging level for the class by 1 per call.
+        """
+        self.debug = self.debug + 1
+        print("DEBUG: Debugging level set to: {}".format(self.debug))
+
+    def toggle_debug( self ):
+        """
+        Toggle debugging. If on, shut it off, if off, set it to 1.
+        """
+        if self.debug >= 1:
+           print("DEBUG: Turning ssapi debugging off.")
+           self.debug = 0
+        else:
+           print("DEBUG: Turning ssapi debugging on.")
+           self.debug = 1
 
     def get_node_name( self ):
         """
@@ -189,6 +217,9 @@ class Cluster:
                nodename = line.split()[4]
                self.cluster_manager['node'] = nodename
                self.cluster_manager['ip'] = ipaddr
+               if self.debug >= 1:
+                  print("DEBUG: Cluster Manager IP: {0}".format(ipaddr))
+                  print("DEBUG: Cluster Manager Name: {0}".format(nodename))
 
     def is_node_cluster_manager( self ):
         """
@@ -197,7 +228,7 @@ class Cluster:
         """
         self.get_cluster_manager()
 
-        if self.nodename == self.cluster_manager['node']:
+        if self.nodename in self.cluster_manager['node']:
            self.is_cluster_manager = True
         else:
            self.is_cluster_manager = False
