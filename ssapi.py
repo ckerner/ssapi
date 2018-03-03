@@ -375,6 +375,9 @@ class Snapshots:
         names that are to be purged.  It does not purge them, only a list of what needs to be purged
         based on how many you want to keep.
         """
+        # Slicing is a 0 based operation, plus we are adding a snapshot.
+        max_to_keep = max_to_keep - 1
+
         self.dellist = []
         if self.snap_count <= max_to_keep:
            return self.dellist
