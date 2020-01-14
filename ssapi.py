@@ -54,6 +54,8 @@ def replace_encoded_strings( mystring ):
     """
     tempstring = mystring.replace('%2F', '/')
     mystring = tempstring
+    tempstring = mystring.replace('%5F', '_')
+    mystring = tempstring
     tempstring = mystring.replace('%3A', ':')
     return tempstring
 
@@ -397,9 +399,9 @@ class Snapshots:
         need to specify the snapshot name.
         """
         if self.fileset == '':
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {}".format(self.gpfsdev, snap_name))
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -N {}".format(self.gpfsdev, snap_name, self.nodename))
         else:
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {}".format(self.gpfsdev, snap_name, self.fileset))
+           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {} -N {}".format(self.gpfsdev, snap_name, self.fileset, self.nodename))
         return cmd_out
 
 
@@ -548,7 +550,7 @@ if __name__ == '__main__':
 
    sys.exit(0)
 
-   snap = Snapshots( 'condo', 'root' )
+   #snap = Snapshots( 'condo', 'root' )
 
    #myFS = Filesystem( 'condo' )
    #fslist = myFS.fileset_list()
