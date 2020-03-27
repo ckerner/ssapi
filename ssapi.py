@@ -339,6 +339,7 @@ class Snapshots:
         self.fileset = fileset
         self.snap_name_separator = '_'
         self.snapshots = {}
+        self.get_node_name()
 
         if self.fileset == '':
            cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlssnapshot {0} -Y".format( self.gpfsdev ))
@@ -368,6 +369,16 @@ class Snapshots:
         snaplist = self.snapshots.keys()
         self.snaplist = sorted( snaplist )
         self.snap_count = len( snaplist )
+
+    def get_node_name( self ):
+        """
+        This routine will extract the current node name from the GPFS configuration file.
+        """
+        f = open('/var/mmfs/gen/mmfsNodeData', 'r')
+        nodecfg = f.read()
+        nodecfg_s = nodecfg.split(':')
+        f.close()
+        self.nodename = nodecfg_s[5]
 
 
 
