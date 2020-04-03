@@ -31,20 +31,28 @@ import time
 import socket
 
 
-def run_cmd( cmdstr=None ):
+def execute_command( commandString=None ):
     """
-    Wrapper around subprocess module calls.
+    This routing will execute a command and return its output.
+
+    Arguments:
+        commandString - The command you wish to execute.
+
+    Return Values:
+        1 - The return code of the command
+        2 - The information sent to STDOUT from the command
+        3 - The information sent to STDERR from the command
+
+    Note: It is up to the caller to determine success/failure.
+
     """
-    if not cmdstr:
-        return None
-    cmd = shlex.split(cmdstr)
-    subp = Popen(cmd, stdout=PIPE, stderr=PIPE)
-    (outdata, errdata) = subp.communicate()
-    if subp.returncode != 0:
-        msg = "Error\n  Command: {0}\n  Message: {1}".format(cmdstr,errdata)
-        raise UserWarning( msg )
-        sys.exit( subp.returncode )
-    return( outdata )
+    if not commandString:
+       return( 99999999, None, None )
+
+    shellCommand = shlex.split( commandString )
+    subp = Popen( shellCommand, stdout=PIPE, stderr=PIPE )
+    ( outdata, errdata ) = subp.communicate()
+    return( subp.returncode, outdata, errdata )
 
 
 def replace_encoded_strings( mystring ):
@@ -105,7 +113,7 @@ class Nsds:
         """
         self.nsds = {}
         fsdevs = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsnsd")
+        ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlsnsd" )
 
         for line in cmd_out.splitlines():
             line.rstrip()
@@ -198,7 +206,7 @@ class Cluster:
         This routine parses the mmlsmgr command.
         """
         self.cluster_manager = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsmgr -c")
+        ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlsmgr -c" )
         for line in cmd_out.splitlines():
             line.rstrip()
 
@@ -233,7 +241,7 @@ class Cluster:
         This routine parses the mmlscluster command.
         """
         self.cluster_info = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlscluster")
+        ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlscluster" )
         found_nodes = 0
         for line in cmd_out.splitlines():
             line.rstrip()
@@ -297,7 +305,7 @@ class StoragePool:
         self.gpfsdev = gpfsdev
         self.pools = {}
 
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlspool {}".format( self.gpfsdev))
+        ( rc, cmd_out, cmd_err )  = execute_command( "/usr/lpp/mmfs/bin/mmlspool {}".format( self.gpfsdev) )
 
         for line in cmd_out.splitlines()[2:]:
             line.rstrip()
@@ -342,9 +350,9 @@ class Snapshots:
         self.get_node_name()
 
         if self.fileset == '':
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlssnapshot {0} -Y".format( self.gpfsdev ))
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlssnapshot {0} -Y".format( self.gpfsdev ) )
         else:
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlssnapshot {0} -j {1} -Y".format( self.gpfsdev, self.fileset ))
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlssnapshot {0} -j {1} -Y".format( self.gpfsdev, self.fileset ) )
 
         # Process the HEADER line
         if 'No snapshots in file system' in cmd_out.splitlines()[0]:
@@ -410,9 +418,9 @@ class Snapshots:
         need to specify the snapshot name.
         """
         if self.fileset == '':
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -N {}".format(self.gpfsdev, snap_name, self.nodename))
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -N {}".format(self.gpfsdev, snap_name, self.nodename) )
         else:
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {} -N {}".format(self.gpfsdev, snap_name, self.fileset, self.nodename))
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {} -N {}".format(self.gpfsdev, snap_name, self.fileset, self.nodename) )
         return cmd_out
 
 
@@ -428,10 +436,10 @@ class Snapshots:
         """
         if self.fileset == '':
            snapname = time.strftime("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ))
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1}".format( self.gpfsdev, snapname ) )
         else:
            snapname = self.fileset + self.snap_name_separator + time.strftime("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
-           cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1} -j {2}".format( self.gpfsdev, snapname, self.fileset ))
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1} -j {2}".format( self.gpfsdev, snapname, self.fileset ) )
 
 
 class Filesystem:
@@ -468,7 +476,7 @@ class Filesystem:
 
     def get_filesystem_information( self ):
         self.filesys = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsfs {0} -Y".format(self.gpfsdev))
+        ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlsfs {0} -Y".format(self.gpfsdev) )
         for line in cmd_out.splitlines():
             line.rstrip()
 
@@ -501,7 +509,7 @@ class Filesystem:
 
     def get_fileset_information( self ):
         self.filesets = {}
-        cmd_out = run_cmd("/usr/lpp/mmfs/bin/mmlsfileset {0} -Y".format(self.gpfsdev))
+        ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlsfileset {0} -Y".format(self.gpfsdev) )
 
         # Process the HEADER line
         keys = cmd_out.splitlines()[0].split(':')[7:]
