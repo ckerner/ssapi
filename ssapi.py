@@ -29,9 +29,10 @@ import sys
 import shlex
 import time
 import socket
+import inspect
 
 
-def execute_command( commandString=None ):
+def execute_command( commandString=None, Debug=False ):
     """
     This routing will execute a command and return its output.
 
@@ -52,7 +53,14 @@ def execute_command( commandString=None ):
     shellCommand = shlex.split( commandString )
     subp = Popen( shellCommand, stdout=PIPE, stderr=PIPE )
     ( outdata, errdata ) = subp.communicate()
-    return( subp.returncode, outdata, errdata )
+
+    if Debug:
+       print("DEBUG: Command: {}".format(commandString))
+       print("DEBUG: Return Code: {}".format(subp.returncode))
+       print("DEBUG: STDOUT: {}".format(outdata))
+       print("DEBUG: STDERR: {}".format(errdata))
+
+    return  ( subp.returncode, outdata, errdata )
 
 
 def replace_encoded_strings( mystring ):
@@ -92,8 +100,30 @@ class Nsds:
     nsds[name]['servers'] = The storage servers the specified name is hosted by
 
     """
-    def __init__( self ):
+    def __init__( self, Debug=False ):
+        self.set_debug( Debug )
         self.collect_nsd_info()
+
+    def set_debug( self, Debug ):
+        """
+        Set the debugging level for the class. 0 by default.
+        """
+        self.debug = Debug
+        if self.debug == True:
+           print("DEBUG: NSDs: Debugging turned on")
+
+
+    def toggle_debug( self ):
+        """
+        Toggle debugging. If on, shut it off, if off, set it to 1.
+        """
+        if self.debug == True:
+           print("DEBUG: NSDs: Turning ssapi debugging off.")
+           self.debug = False
+        else:
+           print("DEBUG: NSDs: Turning ssapi debugging on.")
+           self.debug = True
+
 
     def dump( self ):
         print("GPFS Devices: {}".format(self.gpfsdevs))
@@ -111,6 +141,10 @@ class Nsds:
         """
         Process the mmlsnsd command output to build the necessary structures.
         """
+        if self.debug:
+           dfunc = inspect.stack()[0][3]
+           print("DEBUG: Starting Function: {}".format(dfunc))
+
         self.nsds = {}
         fsdevs = {}
         ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlsnsd" )
@@ -156,6 +190,10 @@ class Nsds:
 
         self.gpfsdevs = fsdevs.keys()
 
+        if self.debug:
+           dfunc = inspect.stack()[0][3]
+           print("DEBUG: Leavng Function: {}".format(dfunc))
+
 
 
 class Cluster:
@@ -169,42 +207,57 @@ class Cluster:
         self.get_cluster_info()
         self.get_node_name()
         self.is_node_cluster_manager()
-        self.nsds = Nsds()
+        self.nsds = Nsds( Debug=self.debug )
         self.gpfsdevs = self.nsds.return_gpfs_devices()
+
 
     def set_debug( self, Debug ):
         """
         Set the debugging level for the class. 0 by default.
         """
         self.debug = Debug
-        if self.debug==True:
-           print("DEBUG: Debugging turned on")
+        if self.debug == True:
+           print("DEBUG: CLUSTER: Debugging turned on")
+
 
     def toggle_debug( self ):
         """
         Toggle debugging. If on, shut it off, if off, set it to 1.
         """
         if self.debug == True:
-           print("DEBUG: Turning ssapi debugging off.")
+           print("DEBUG: CLUSTER: Turning ssapi debugging off.")
            self.debug = False
         else:
-           print("DEBUG: Turning ssapi debugging on.")
+           print("DEBUG: CLUSTER: Turning ssapi debugging on.")
            self.debug = True
+
 
     def get_node_name( self ):
         """
         This routine will extract the current node name from the GPFS configuration file.
         """
+        if self.debug:
+           dfunc = inspect.stack()[0][3]
+           print("DEBUG: Starting Function: {}".format(dfunc))
+
         f = open('/var/mmfs/gen/mmfsNodeData', 'r')
         nodecfg = f.read()
         nodecfg_s = nodecfg.split(':')
         f.close()
         self.nodename = nodecfg_s[5]
 
+        if self.debug:
+           print("DEBUG: Leavng Function: {}".format(dfunc))
+
+
     def get_cluster_manager( self ):
         """
         This routine parses the mmlsmgr command.
         """
+        if self.debug:
+           dfunc = inspect.stack()[0][3]
+           print("DEBUG: Starting Function: {}".format(dfunc))
+
         self.cluster_manager = {}
         ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlsmgr -c" )
         for line in cmd_out.splitlines():
@@ -224,11 +277,19 @@ class Cluster:
                   print("DEBUG: Cluster Manager IP: {0}".format(ipaddr))
                   print("DEBUG: Cluster Manager Name: {0}".format(nodename))
 
+        if self.debug:
+           print("DEBUG: Leavng Function: {}".format(dfunc))
+
+
     def is_node_cluster_manager( self ):
         """
         Check to see if this node is the cluster manager.  If so, 
         set cluster_manager to True else set it to False.
         """
+        if self.debug:
+           dfunc = inspect.stack()[0][3]
+           print("DEBUG: Starting Function: {}".format(dfunc))
+
         self.get_cluster_manager()
 
         if self.nodename in self.cluster_manager['node']:
@@ -236,10 +297,18 @@ class Cluster:
         else:
            self.is_cluster_manager = False
 
+        if self.debug:
+           print("DEBUG: Leavng Function: {}".format(dfunc))
+
+
     def get_cluster_info( self ):
         """
         This routine parses the mmlscluster command.
         """
+        if self.debug:
+           dfunc = inspect.stack()[0][3]
+           print("DEBUG: Starting Function: {}".format(dfunc))
+
         self.cluster_info = {}
         ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlscluster" )
         found_nodes = 0
@@ -285,6 +354,9 @@ class Cluster:
             if 'Secondary server' in line:
                self.cluster_info['secondary'] = line.split()[2]
 
+        if self.debug:
+           print("DEBUG: Leavng Function: {}".format(dfunc))
+
 
     def dump( self ):
         if self.debug:
@@ -293,8 +365,11 @@ class Cluster:
                print("{0} -> {1}".format(key, self.cluster_info[key]))
 
            print("\nNSD Information")
-           for key in self.nsd_info.keys():
-               print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
+           try:
+              for key in self.nsd_info.keys():
+                  print("{0} -> FS: {1}   Servers: {2}".format(key, self.nsd_info[key]['usage'], self.nsd_info[key]['servers']))
+           except:
+              print("No NSD Information Loaded.")
 
 
 
@@ -342,17 +417,31 @@ class StoragePool:
 
 
 class Snapshots:
-    def __init__( self, gpfsdev, fileset='' ):
+    def __init__( self, gpfsdev, fileset, Debug=False ):
+        self.set_debug(Debug)
         self.gpfsdev = gpfsdev
         self.fileset = fileset
         self.snap_name_separator = '_'
         self.snapshots = {}
         self.get_node_name()
 
-        if self.fileset == '':
-           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlssnapshot {0} -Y".format( self.gpfsdev ) )
+        if self.debug == True:
+           print("GPFSDEV: {}   FILESET: {}   DEBUG: {}".format(self.gpfsdev,
+                                                                self.fileset,
+                                                                self.debug))
+        if not self.fileset:
+           if self.debug == True:
+              print( "DEBUG: CMD: /usr/lpp/mmfs/bin/mmlssnapshot {} -Y ".format( self.gpfsdev) )
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlssnapshot {} -Y".format( self.gpfsdev ), self.debug )
         else:
-           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlssnapshot {0} -j {1} -Y".format( self.gpfsdev, self.fileset ) )
+           if self.debug == True:
+              print( "DEBUG: CMD: /usr/lpp/mmfs/bin/mmlssnapshot {} -j {} -Y ".format( self.gpfsdev, self.fileset ) )
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmlssnapshot {} -j {} -Y".format( self.gpfsdev, self.fileset ) )
+
+        if rc > 0:
+           print("RC: {}".format(rc))
+           print("STDOUT: {}".format(cmd_out))
+           print("STDERR: {}".format(cmd_err))
 
         # Process the HEADER line
         if 'No snapshots in file system' in cmd_out.splitlines()[0]:
@@ -377,6 +466,28 @@ class Snapshots:
         snaplist = self.snapshots.keys()
         self.snaplist = sorted( snaplist )
         self.snap_count = len( snaplist )
+
+
+    def set_debug( self, Debug ):
+        """
+        Set the debugging level for the class. 0 by default.
+        """
+        self.debug = Debug
+        if self.debug == True:
+           print("DEBUG: Snapshots: Debugging turned on")
+
+
+    def toggle_debug( self ):
+        """
+        Toggle debugging. If on, shut it off, if off, set it to 1.
+        """
+        if self.debug == True:
+           print("DEBUG: Snapshots: Turning ssapi debugging off.")
+           self.debug = False
+        else:
+           print("DEBUG: Snapshots: Turning ssapi debugging on.")
+           self.debug = True
+
 
     def get_node_name( self ):
         """
@@ -418,10 +529,12 @@ class Snapshots:
         need to specify the snapshot name.
         """
         if self.fileset == '':
-           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -N {}".format(self.gpfsdev, snap_name, self.nodename) )
+           #( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -N {}".format(self.gpfsdev, snap_name, self.nodename) )
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} ".format( self.gpfsdev, snap_name ) )
         else:
-           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {} -N {}".format(self.gpfsdev, snap_name, self.fileset, self.nodename) )
-        return cmd_out
+           #( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {} -N {}".format(self.gpfsdev, snap_name, self.fileset, self.nodename) )
+           ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmdelsnapshot {} {} -j {} ".format( self.gpfsdev, snap_name, self.fileset ) )
+        return ( rc, cmd_out, cmd_err )
 
 
     def snap( self ):
@@ -441,6 +554,8 @@ class Snapshots:
            snapname = self.fileset + self.snap_name_separator + time.strftime("%Y%m%d") + self.snap_name_separator + time.strftime("%H%M")
            ( rc, cmd_out, cmd_err ) = execute_command( "/usr/lpp/mmfs/bin/mmcrsnapshot {0} {1} -j {2}".format( self.gpfsdev, snapname, self.fileset ) )
 
+        return ( rc, cmd_out, cmd_err )
+
 
 class Filesystem:
     """
@@ -455,6 +570,7 @@ class Filesystem:
                             'blockAllocationType': '',
                             'fileLockingSemantics': '',
                           }
+
 
     def __init__( self, gpfsdev ):
         if not gpfsdev:
@@ -473,6 +589,7 @@ class Filesystem:
 
     def get_pool_information( self ):
         self.pools = StoragePool( self.gpfsdev )
+
 
     def get_filesystem_information( self ):
         self.filesys = {}
