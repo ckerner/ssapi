@@ -104,6 +104,7 @@ class Nsds:
         self.set_debug( Debug )
         self.collect_nsd_info()
 
+
     def set_debug( self, Debug ):
         """
         Set the debugging level for the class. 0 by default.
@@ -131,11 +132,13 @@ class Nsds:
         for nsd in sorted(nsd_keys):
             print("{:<10s}  {:<10s}  {:<s}".format(nsd, self.nsds[nsd]['usage'], self.nsds[nsd]['servers']))
 
+
     def return_gpfs_devices( self ):
         """
         Return an iterable list of uniq GPFS devices.
         """
         return self.gpfsdevs
+
 
     def collect_nsd_info( self ):
         """
@@ -498,7 +501,6 @@ class Snapshots:
         nodecfg_s = nodecfg.split(':')
         f.close()
         self.nodename = nodecfg_s[5]
-
 
 
     def get_delete_list( self, max_to_keep ):
